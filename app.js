@@ -216,6 +216,11 @@ async function loadProjects() {
 
     const choose = document.createElement("button");
     choose.textContent = "Fayl yuklash";
+    const showFiles = document.createElement("button");
+showFiles.textContent = "📂 Yuklangan fayllar";
+showFiles.onclick = () => showProjectFiles(project, item);
+
+item.append(showFiles);
     choose.onclick = () => {
       selectedProject = project;
       document.getElementById("projectFile").click();
