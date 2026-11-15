@@ -1,58 +1,76 @@
 
-import { createClient } from
-  "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SUPABASE_URL =
-  "https://cjuwonjnpbcieyktmrjx.supabase.co";
+const SUPABASE_URL = "https://cjuwonjnpbcieyktmrjx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_E5R31rnk2irKuDCLeGNmHQ_pVvFUzPL";
 
-const SUPABASE_KEY =
-  "sb_publishable_E5R31rnk2irKuDCLeGNmHQ_pVvFUzPL";
-
-const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const main = document.querySelector("main");
 
 const auth = document.createElement("section");
 auth.className = "card";
 auth.style.marginBottom = "20px";
-
 auth.innerHTML = `
   <h2>IMPULSE akkaunti</h2>
-  <input id="email" type="email"
-    placeholder="Email manzilingiz"
-    style="display:block;width:100%;padding:13px;margin:10px 0;border-radius:8px">
-  <input id="password" type="password"
-    placeholder="Parol"
-    style="display:block;width:100%;padding:13px;margin:10px 0;border-radius:8px">
+  <input id="email" type="email" placeholder="Email"
+    style="display:block;width:100%;padding:13px;margin:10px 0">
+  <input id="password" type="password" placeholder="Parol"
+    style="display:block;width:100%;padding:13px;margin:10px 0">
   <button id="signup">Ro‘yxatdan o‘tish</button>
   <button id="login">Kirish</button>
   <button id="logout" style="display:none">Chiqish</button>
   <p id="authStatus" class="sub"></p>
 `;
-
 main.prepend(auth);
 
 const status = document.getElementById("authStatus");
 
+const projectSection = document.createElement("section");
+projectSection.className = "card";
+projectSection.style.marginTop = "20px";
+projectSection.innerHTML = `
+  <h2>📁 Mening loyihalarim</h2>
+  <input id="projectTitle" type="text" placeholder="Loyiha nomi"
+    style="display:block;width:100%;padding:13px;margin:10px 0">
+  <button id="createProject">+ Yangi loyiha yaratish</button>
+  <p id="projectStatus" class="sub"></p>
+  <div id="projectList"></div>
+`;
+main.append(projectSection);
+
+const projectStatus = document.getElementById("projectStatus");
+const projectList = document.getElementById("projectList");
+
+let currentUser = null;
+let selectedProject = null;
+
 async function refreshSession() {
-  const { data } = await supabase.auth.getSession();
-  const loggedIn = !!data.session;
+  const { data, error } = await supabase.auth.getSession();
+  if (error) {
+    status.textContent = error.message;
+    return;
+  }
+
+  currentUser = data.session?.user || null;
 
   document.getElementById("signup").style.display =
-    loggedIn ? "none" : "inline-block";
-
+    currentUser ? "none" : "inline-block";
   document.getElementById("login").style.display =
-    loggedIn ? "none" : "inline-block";
-
+    currentUser ? "none" : "inline-block";
   document.getElementById("logout").style.display =
-    loggedIn ? "inline-block" : "none";
+    currentUser ? "inline-block" : "none";
 
-  status.textContent = loggedIn
-    ? "Tizimga kirdingiz: " + data.session.user.email
+  status.textContent = currentUser
+    ? "Tizimga kirdingiz: " + currentUser.email
     : "Tizimga kirish yoki ro‘yxatdan o‘tish kerak.";
+
+  projectSection.style.display = currentUser ? "block" : "none";
+
+  if (currentUser) await loadProjects();
+  else {
+    projectList.innerHTML = "";
+    selectedProject = null;
+  }
 }
 
 document.getElementById("signup").onclick = async () => {
@@ -60,16 +78,11 @@ document.getElementById("signup").onclick = async () => {
   const password = document.getElementById("password").value;
 
   if (!email || password.length < 8) {
-    status.textContent =
-      "Email kiriting. Parol kamida 8 belgidan iborat bo‘lsin.";
+    status.textContent = "Email kiriting. Parol kamida 8 belgidan iborat bo‘lsin.";
     return;
   }
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password
-  });
-
+  const { error } = await supabase.auth.signUp({ email, password });
   status.textContent = error
     ? error.message
     : "Ro‘yxatdan o‘tish so‘rovi yuborildi. Emailingizni tekshiring.";
@@ -79,15 +92,8 @@ document.getElementById("login").onclick = async () => {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  status.textContent = error
-    ? error.message
-    : "Muvaffaqiyatli kirdingiz.";
-
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) status.textContent = error.message;
   await refreshSession();
 };
 
@@ -95,6 +101,138 @@ document.getElementById("logout").onclick = async () => {
   await supabase.auth.signOut();
   await refreshSession();
 };
+
+document.getElementById("createProject").onclick = async () => {
+  if (!currentUser) return;
+
+  const title = document.getElementById("projectTitle").value.trim();
+  if (!title) {
+    projectStatus.textContent = "Loyiha nomini kiriting.";
+    return;
+  }
+
+  projectStatus.textContent = "Saqlanmoqda...";
+
+  const { error } = await supabase.from("projects").insert({
+    user_id: currentUser.id,
+    title,
+    status: "created"
+  });
+
+  if (error) {
+    projectStatus.textContent = "Xatolik: " + error.message;
+    return;
+  }
+
+  document.getElementById("projectTitle").value = "";
+  projectStatus.textContent = "Loyiha saqlandi.";
+  await loadProjects();
+};
+
+async function loadProjects() {
+  if (!currentUser) return;
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id,title,status,created_at")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    projectStatus.textContent = "Loyihalarni yuklash xatosi: " + error.message;
+    return;
+  }
+
+  projectList.innerHTML = "";
+
+  if (!data.length) {
+    projectList.textContent = "Hozircha loyihalar yo‘q.";
+    return;
+  }
+
+  data.forEach(project => {
+    const item = document.createElement("div");
+    item.className = "agent";
+    item.style.marginTop = "10px";
+
+    const name = document.createElement("b");
+    name.textContent = project.title;
+
+    const info = document.createElement("p");
+    info.className = "sub";
+    info.textContent = "Holati: " + (project.status || "created");
+
+    const choose = document.createElement("button");
+    choose.textContent = "Fayl yuklash";
+    choose.onclick = () => {
+      selectedProject = project;
+      document.getElementById("projectFile").click();
+    };
+
+    item.append(name, info, choose);
+    projectList.append(item);
+  });
+}
+
+const fileInput = document.createElement("input");
+fileInput.type = "file";
+fileInput.id = "projectFile";
+fileInput.accept = ".pdf,image/png,image/jpeg";
+fileInput.style.display = "none";
+projectSection.append(fileInput);
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files[0];
+  fileInput.value = "";
+
+  if (!file || !currentUser || !selectedProject) return;
+
+  const allowed = [
+    "application/pdf",
+    "image/png",
+    "image/jpeg"
+  ];
+
+  if (!allowed.includes(file.type)) {
+    projectStatus.textContent = "Faqat PDF, PNG yoki JPEG fayl mumkin.";
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    projectStatus.textContent = "Fayl hajmi 20 MB dan oshmasin.";
+    return;
+  }
+
+  projectStatus.textContent = "Fayl yuklanmoqda...";
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${currentUser.id}/${selectedProject.id}/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("impulse-files")
+    .upload(path, file);
+
+  if (uploadError) {
+    projectStatus.textContent = "Yuklash xatosi: " + uploadError.message;
+    return;
+  }
+
+  const { error: insertError } = await supabase.from("documents").insert({
+    project_id: selectedProject.id,
+    user_id: currentUser.id,
+    file_name: file.name,
+    file_type: file.type,
+    storage_path: path
+  });
+
+  if (insertError) {
+    projectStatus.textContent =
+      "Fayl saqlandi, lekin hujjat qaydi yaratilmadi: " + insertError.message;
+    return;
+  }
+
+  projectStatus.textContent = "Fayl muvaffaqiyatli yuklandi!";
+});
 
 await refreshSession();
 
