@@ -296,3 +296,25 @@ await refreshSession();
 supabase.auth.onAuthStateChange(() => {
   refreshSession();
 });
+window.askImpulseAI = async function(prompt) {
+  try {
+    const response = await fetch("/.netlify/functions/ai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "AI bilan bog‘lanishda xatolik");
+    }
+
+    return data.answer;
+  } catch (error) {
+    console.error("IMPULSE AI:", error);
+    throw error;
+  }
+};
