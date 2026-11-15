@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IMPULSE AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#edf2ff;font-family:Arial,sans-serif}
+header{padding:22px 18px;border-bottom:1px solid #27314a;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:25px;font-weight:800;letter-spacing:2px;color:#69a5ff}
+.logo span{color:white}
+.status{font-size:12px;color:#76e2b1}
+main{max-width:1050px;margin:auto;padding:22px 16px}
+h1{font-size:27px;margin-bottom:7px}
+.sub{color:#8997b5;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:24px 0}
+.card{background:#151e33;border:1px solid #293650;border-radius:14px;padding:17px}
+.number{font-size:26px;font-weight:bold;margin-top:10px}
+.section{font-size:18px;margin:28px 0 14px}
+.agents{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.agent{background:#151e33;border:1px solid #293650;padding:15px;border-radius:12px}
+.agent b{display:block;margin-bottom:7px;color:#8bbaff}
+.agent small{color:#9ba9c4}
+.upload{border:2px dashed #45618e;border-radius:15px;padding:30px 15px;text-align:center;background:#111a2d}
+button{background:#3979ec;border:0;color:white;border-radius:9px;padding:12px 17px;font-weight:bold;margin-top:12px}
+button:active{opacity:.7}
+input{display:none}
+footer{padding:25px;text-align:center;color:#74819b;font-size:12px}
+@media(min-width:700px){.stats{grid-template-columns:repeat(4,1fr)}.agents{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">IMPULSE<span> AI</span></div>
+  <div class="status">● SYSTEM ONLINE</div>
+</header>
+<main>
+  <h1>Boshqaruv paneli</h1>
+  <div class="sub">Matematik testlarni avtomatik qayta ishlash markazi</div>
+
+  <div class="stats">
+    <div class="card">Loyihalar<div class="number">0</div></div>
+    <div class="card">Agentlar<div class="number">7</div></div>
+    <div class="card">Fayllar<div class="number">0</div></div>
+    <div class="card">Tizim holati<div class="number" style="color:#76e2b1">Tayyor</div></div>
+  </div>
+
+  <div class="section">📁 Yangi test yuklash</div>
+  <div class="upload">
+    <div style="font-size:35px">📄</div>
+    <b>PDF yoki rasmni tanlang</b>
+    <p class="sub">Matematik test faylini yuklash oynasi</p>
+    <label for="file"><button type="button">Fayl tanlash</button></label>
+    <input id="file" type="file" accept=".pdf,image/*">
+    <p id="filename" class="sub"></p>
+  </div>
+
+  <div class="section">🤖 AI Agentlar</div>
+  <div class="agents">
+    <div class="agent"><b>01 · MANAGER</b><small>Vazifalarni boshqarish</small></div>
+    <div class="agent"><b>02 · SCANNER</b><small>Savollarni aniqlash</small></div>
+    <div class="agent"><b>03 · TRANSLATOR</b><small>Rus tiliga tarjima</small></div>
+    <div class="agent"><b>04 · MATHEMATICS</b><small>Matematik tekshiruv</small></div>
+    <div class="agent"><b>05 · DESIGNER</b><small>LaTeX dizayni</small></div>
+    <div class="agent"><b>06 · INSPECTOR</b><small>Sifat nazorati</small></div>
+    <div class="agent"><b>07 · EXPORTER</b><small>PDF va ZIP eksport</small></div>
+  </div>
+</main>
+<footer>IMPULSE AI · Хамидов Ойбек · 2026</footer>
+<script>
+document.getElementById('file').addEventListener('change',function(){
+ document.getElementById('filename').textContent=
+ this.files.length ? 'Tanlandi: '+this.files[0].name : '';
+});
+</script>
+</body>
+</html>
