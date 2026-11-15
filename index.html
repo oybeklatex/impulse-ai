@@ -75,6 +75,44 @@ document.getElementById('file').addEventListener('change',function(){
  this.files.length ? 'Tanlandi: '+this.files[0].name : '';
 });
 </script>
+  <section class="ai-chat">
+  <h2>IMPULSE AI — Matematik yordamchi</h2>
+
+  <textarea
+    id="aiPrompt"
+    placeholder="Savolingizni yoki matematik masalani yozing..."
+    rows="4"
+  ></textarea>
+
+  <button id="askAIButton">AI ga yuborish</button>
+
+  <div id="aiAnswer">AI javobi shu yerda chiqadi.</div>
+</section>
+
+<script>
+document.getElementById("askAIButton").addEventListener("click", async () => {
+  const prompt = document.getElementById("aiPrompt").value.trim();
+  const answer = document.getElementById("aiAnswer");
+  const button = document.getElementById("askAIButton");
+
+  if (!prompt) {
+    answer.textContent = "Avval savol yozing.";
+    return;
+  }
+
+  button.disabled = true;
+  answer.textContent = "AI javob tayyorlamoqda...";
+
+  try {
+    const result = await window.askImpulseAI(prompt);
+    answer.textContent = result;
+  } catch (error) {
+    answer.textContent = "Xatolik: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>
