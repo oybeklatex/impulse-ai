@@ -44,6 +44,58 @@ const projectList = document.getElementById("projectList");
 let currentUser = null;
 let selectedProject = null;
 
+async function showProjectFiles(project, item) {
+  const oldList = item.querySelector(".project-files");
+  if (oldList) oldList.remove();
+
+  const list = document.createElement("div");
+  list.className = "project-files";
+  list.style.marginTop = "12px";
+  list.textContent = "Fayllar yuklanmoqda...";
+  item.append(list);
+
+  const { data: files, error } = await supabase
+    .from("documents")
+    .select("file_name,file_type,storage_path,created_at")
+    .eq("project_id", project.id)
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "Xatolik: " + error.message;
+    return;
+  }
+
+  list.innerHTML = "";
+
+  if (!files.length) {
+    list.textContent = "Bu loyihada fayllar yo‘q.";
+    return;
+  }
+
+  for (const file of files) {
+    const { data, error: urlError } = await supabase.storage
+      .from("impulse-files")
+      .createSignedUrl(file.storage_path, 3600);
+
+    const row = document.createElement("p");
+
+    if (urlError) {
+      row.textContent = file.file_name + " — ochib bo‘lmadi";
+    } else {
+      const link = document.createElement("a");
+      link.href = data.signedUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "📄 " + file.file_name;
+      link.style.color = "#8bbaff";
+      row.append(link);
+    }
+
+    list.append(row);
+  }
+}
+
 async function refreshSession() {
   const { data, error } = await supabase.auth.getSession();
   if (error) {
